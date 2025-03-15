@@ -48,21 +48,32 @@ class StaScraper(
 
     suspend fun scrapeTrademarkByList(
         applicationNumbers: List<String>,
-        threadCount: Int = 10
-    ): List<Trademark> {
-        if (applicationNumbers.isEmpty()) return emptyList()
+        threadCount: Int = 25,
+        progressCallback: (
+            progress: Float,
+            completed: Int,
+            total: Int,
+            currentTm: String?
+        ) -> Unit = { _, _, _, _ -> },
+        trademarkCallback: (trademark: Trademark?) -> Unit = { _ -> }
+    ) {
+        if (applicationNumbers.isEmpty()) return
 
         Logger.i("Starting parallel scraping for ${applicationNumbers.size} trademarks using $threadCount threads")
 
         // Create chunks of application numbers distributed evenly across threads
         val chunkSize = (applicationNumbers.size + threadCount - 1) / threadCount
         val chunks = applicationNumbers.chunked(chunkSize)
+        println(chunks[0].size)
 
         // Create a thread pool with a fixed number of threads
         val dispatcher = Executors.newFixedThreadPool(threadCount).asCoroutineDispatcher()
 
-        return try {
-            val results = withContext(dispatcher) {
+        try {
+            var completedCount = 0
+            val totalCount = applicationNumbers.size
+
+            withContext(dispatcher) {
                 chunks.map { chunk ->
                     async {
                         val httpClient = ktorClientFactory.createHttpClient()
@@ -70,29 +81,46 @@ class StaScraper(
                             // Get a fresh captcha for each thread
                             val captcha = captchaResolver.requestCaptcha(client)
 
-                            chunk.mapNotNull { appId ->
+                            chunk.forEach { appId ->
                                 try {
                                     val trademark = scrapeTrademarkById(
                                         httpClient = httpClient,
                                         applicationId = appId,
                                         captcha = captcha
                                     )
-                                    trademark
+
+                                    // Update progress after each successful scrape
+                                    synchronized(this@StaScraper) {
+                                        completedCount++
+                                        val progress = completedCount.toFloat() / totalCount
+                                        progressCallback(
+                                            progress,
+                                            completedCount,
+                                            totalCount,
+                                            trademark.applicationNumber
+                                        )
+                                        trademarkCallback(trademark)
+                                    }
                                 } catch (e: Exception) {
                                     Logger.e("Error scraping trademark $appId: ${e.message}")
-                                    null
+
+                                    // Update progress even for failed scrapes
+                                    synchronized(this@StaScraper) {
+                                        completedCount++
+                                        val progress = completedCount.toFloat() / totalCount
+                                        progressCallback(progress, completedCount, totalCount, null)
+                                        trademarkCallback(null)
+                                    }
                                 }
                             }
                         }
                     }
-                }.awaitAll().flatten()
+                }.awaitAll()
             }
-
-            Logger.i("Completed parallel scraping with ${results.size} trademarks collected")
-            results
+            Logger.i("Completed parallel scraping for $totalCount trademarks")
         } catch (e: Exception) {
             Logger.e("Error during parallel trademark scraping: ${e.message}", e)
-            emptyList()
+            throw e
         } finally {
             dispatcher.close()
         }
