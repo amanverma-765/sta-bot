@@ -1,0 +1,25 @@
+server:
+  port: 4545
+
+spring:
+  application:
+    name: sta-bot
+
+  # Database configuration
+  datasource:
+    url: jdbc:postgresql://20.205.137.213:5432/sta-db
+    username: admin@sta
+    password: T9qBkfe6XHiijggv1gpxbKUB
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+
+  # Flyway  configuration
+  flyway:
+    baseline-on-migrate: true
