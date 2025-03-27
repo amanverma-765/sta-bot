@@ -29,7 +29,7 @@ class TrademarkSchedulerService(
     private val naThreshold = Constants.NA_THRESHOLD
 
 
-    @Scheduled(fixedRate = Constants.TASK_FREQ)  // Task Freq
+    @Scheduled(fixedRate = Constants.TASK_FREQ)
     @Transactional
     fun scheduleTrademarkScraping() {
         if (isRunning) {

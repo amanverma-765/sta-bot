@@ -155,7 +155,7 @@ fun getTrademarkStatusTemplate(totalTrademarks: Int, lastTrademark: Trademark?):
                             </div>
                             <div class="stat-title">Total Trademarks</div>
                             <div class="stat-value">${totalTrademarks}</div>
-                            <div class="subtitle">Scraped from database</div>
+                            <div class="subtitle">Scraped from ipIndia</div>
                         </div>
                         
                         ${if (lastTrademark != null) """
@@ -166,7 +166,7 @@ fun getTrademarkStatusTemplate(totalTrademarks: Int, lastTrademark: Trademark?):
                                     <polyline points="12 6 12 12 16 14"></polyline>
                                 </svg>
                             </div>
-                           <div class="stat-title">Latest Trademark</div>
+                           <div class="stat-title">Last Scraped Trademark</div>
                             <div class="stat-value">${lastTrademark.applicationNumber}</div>
                             <div class="subtitle">Last updated: ${lastTrademark.dateOfApplication}</div>
                             <div class="subtitle">Name: ${lastTrademark.tmAppliedFor}</div>
