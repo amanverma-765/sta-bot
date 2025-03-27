@@ -77,7 +77,7 @@ class TrademarkScraper(
                 headers { defaultHeaders.forEach { (key, value) -> append(key, value) } }
             }.bodyAsText()
         }
-        Logger.e("Trademark data fetched successfully for: $appId")
+        Logger.i("Trademark data fetched successfully for: $appId")
         return finalResponse
     }
 

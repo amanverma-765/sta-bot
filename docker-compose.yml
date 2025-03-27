@@ -6,7 +6,7 @@ services:
       - POSTGRES_USER=admin@sta
       - POSTGRES_PASSWORD=1O4FiMvyR8AyDodwAg7n  # Replace with your actual password
     ports:
-      - '5432:5432'
+      - '5435:5432'
     volumes:
       - postgres_data:/var/lib/postgresql/data  # Persist PostgreSQL data
     networks:

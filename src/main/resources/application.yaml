@@ -7,7 +7,7 @@ spring:
 
   # Database configuration
   datasource:
-    url: jdbc:postgresql://localhost:5432/sta-bot
+    url: jdbc:postgresql://localhost:5435/sta-bot
     username: admin@sta
     password: 1O4FiMvyR8AyDodwAg7n
     driver-class-name: org.postgresql.Driver
