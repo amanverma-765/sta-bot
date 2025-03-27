@@ -22,7 +22,7 @@ class TrademarkScraper(
     private val initialRetryDelayMs = 120000L // 2 minutes
     private val maxRetryDelayMs = 900000L    // 10 minutes
 
-    suspend fun requestTrademarkData(
+    suspend fun scrapeTrademarkData(
         httpClient: HttpClient,
         appId: String,
         captcha: String,
@@ -30,8 +30,6 @@ class TrademarkScraper(
     ): String? {
 
         val finalResponse = retryWithExponentialBackoff(maxRetries, initialRetryDelayMs, maxRetryDelayMs) {
-
-            Logger.i("Extraction started for $appId")
 
             val firstPageResponse = httpClient.get(TRADEMARK_URL) {
                 headers {
@@ -79,7 +77,7 @@ class TrademarkScraper(
                 headers { defaultHeaders.forEach { (key, value) -> append(key, value) } }
             }.bodyAsText()
         }
-        Logger.i("Extraction completed for $appId")
+        Logger.e("Trademark data fetched successfully for: $appId")
         return finalResponse
     }
 

@@ -1,0 +1,30 @@
+services:
+  postgres:
+    image: 'postgres:latest'
+    environment:
+      - POSTGRES_DB=sta-bot
+      - POSTGRES_USER=admin@sta
+      - POSTGRES_PASSWORD=1O4FiMvyR8AyDodwAg7n  # Replace with your actual password
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data  # Persist PostgreSQL data
+    networks:
+      - pgnetwork
+
+  adminer:
+    image: 'adminer:latest'
+    ports:
+      - '7070:8080'  # Access Adminer on http://localhost:8080
+    environment:
+      - ADMINER_DEFAULT_SERVER=postgres  # Specify the PostgreSQL service to connect to
+      - ADMINER_USER=admin@sta             # Adminer default username for PostgreSQL
+      - ADMINER_PASSWORD=1O4FiMvyR8AyDodwAg7n  # Adminer default password
+    networks:
+      - pgnetwork
+
+networks:
+  pgnetwork:
+
+volumes:
+  postgres_data:  # Named volume to persist PostgreSQL data

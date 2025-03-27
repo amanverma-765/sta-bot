@@ -5,7 +5,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class Trademark(
-    val status: String? = null,
+    val status: String,
     val applicationNumber: String,
     val tmClass: String,
     val dateOfApplication: String? = null,
@@ -26,9 +26,6 @@ data class Trademark(
     val agentAddress: String? = null,
     val publicationDetails: String? = null,
     val serviceDetails: String? = null,
-
-//    val oppositionNumber: String? = null,
-//    val opponentName: String? = null,
-//    val opponentCode: String? = null,
-//    val opponentAgentName: String? = null,
+    val oppositions: MutableList<Opposition>,
+    val oppositionsAlt: MutableList<String>? = null
 )

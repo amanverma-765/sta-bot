@@ -10,7 +10,7 @@ import org.springframework.stereotype.Component
 class PayloadParser {
 
     fun getPayloadFromThirdPage(response: String): MultiPartFormDataContent {
-        Logger.i("Parsing third page payload")
+//        Logger.i("Parsing third page payload")
         val doc = parseHtmlOrThrow(response)
 
         val formFields = mapOf(
@@ -27,7 +27,7 @@ class PayloadParser {
     }
 
     fun getPayloadFromSecondPage(appId: String, captcha: String, response: String): MultiPartFormDataContent {
-        Logger.i("Parsing second page payload")
+//        Logger.i("Parsing second page payload")
         val doc = parseHtmlOrThrow(response)
 
         val formFields = mapOf(
@@ -49,7 +49,7 @@ class PayloadParser {
     }
 
     fun getPayloadFromFirstPage(response: String): MultiPartFormDataContent {
-        Logger.i("Parsing first page payload")
+//        Logger.i("Parsing first page payload")
         val doc = parseHtmlOrThrow(response)
 
         val formFields = mapOf(

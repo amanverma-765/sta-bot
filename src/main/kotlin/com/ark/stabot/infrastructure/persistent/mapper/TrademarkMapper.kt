@@ -1,7 +1,11 @@
 package com.ark.stabot.infrastructure.persistent.mapper
 
 import com.ark.stabot.infrastructure.persistent.entity.TrademarkEntity
+import com.ark.stabot.infrastructure.persistent.mapper.OppositionMapper.toOpposition
+import com.ark.stabot.infrastructure.persistent.mapper.OppositionMapper.toOppositionEntity
 import com.ark.stabot.model.Trademark
+import com.ark.stabot.utils.toOppList
+import com.ark.stabot.utils.toOppString
 
 object TrademarkMapper {
 
@@ -27,7 +31,9 @@ object TrademarkMapper {
             agentName = this.agentName,
             agentAddress = this.agentAddress,
             publicationDetails = this.publicationDetails,
-            serviceDetails = this.serviceDetails
+            serviceDetails = this.serviceDetails,
+            oppositions = this.oppositions.map { it.toOpposition() }.toMutableList(),
+            oppositionsAlt = this.oppositionsAlt?.toOppList()
         )
     }
 
@@ -53,7 +59,9 @@ object TrademarkMapper {
             agentName = this.agentName,
             agentAddress = this.agentAddress,
             publicationDetails = this.publicationDetails,
-            serviceDetails = this.serviceDetails
+            serviceDetails = this.serviceDetails,
+            oppositions = this.oppositions.map { it.toOppositionEntity() }.toMutableList(),
+            oppositionsAlt = this.oppositionsAlt?.toOppString()
         )
     }
 }

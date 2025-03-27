@@ -8,26 +8,28 @@ import com.ark.stabot.scraper.StaScraper
 import com.ark.stabot.utils.Constants
 import jakarta.transaction.Transactional
 import kotlinx.coroutines.runBlocking
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.scheduling.annotation.EnableScheduling
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
 import java.time.LocalDateTime
+import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 
 @Service
 @EnableScheduling
-class TrademarkSchedulerService @Autowired constructor(
+class TrademarkSchedulerService(
     private val staScraper: StaScraper,
     private val trademarkRepository: TrademarkRepository
 ) {
 
-    private var currentApplicationNumber = AtomicReference<String>()
+    private var currentApplicationNumber = AtomicReference<Int>()
     private var isRunning = false
-    private val chunkSize = 5000 // Number of trademarks to process per transaction
-    private val collectedTrademarks = mutableListOf<Trademark>()
+    private val tmChunkSize = Constants.TRADEMARK_CHUNK_SIZE
+    private val consecutiveNaCount = AtomicInteger(0)
+    private val naThreshold = Constants.NA_THRESHOLD
 
-    @Scheduled(fixedRate = 3600000) // Run every hour
+
+    @Scheduled(fixedRate = Constants.TASK_FREQ)  // Task Freq
     @Transactional
     fun scheduleTrademarkScraping() {
         if (isRunning) {
@@ -37,45 +39,61 @@ class TrademarkSchedulerService @Autowired constructor(
 
         try {
             isRunning = true
+            consecutiveNaCount.set(0)
 
             // Determine starting point
             val lastProcessedTrademark = trademarkRepository
                 .findAll()
                 .maxByOrNull { it.applicationNumber }
-                ?.applicationNumber ?: Constants.INITIAL_TRADEMARK
+                ?.applicationNumber?.toIntOrNull() ?: (Constants.INITIAL_TRADEMARK.toInt() - 1)
 
-            currentApplicationNumber.set(lastProcessedTrademark)
+            currentApplicationNumber.set(lastProcessedTrademark + 1)
+
+//            currentApplicationNumber.set(lastProcessedTrademark)
             Logger.i("Starting trademark scraping from application number: ${currentApplicationNumber.get()}")
 
             // Generate a list of subsequent application numbers
-            val applicationNumbers = generateApplicationNumbers(currentApplicationNumber.get(), chunkSize)
+            val applicationNumbers = generateApplicationNumbers(currentApplicationNumber.get(), tmChunkSize)
 
             runBlocking {
-                staScraper.scrapeTrademarkByList(
+                // Get scraper results
+                val trademarks = staScraper.scrapeTrademarkByList(
                     applicationNumbers = applicationNumbers,
-                    threadCount = Constants.MAX_THREADS,
-                    progressCallback = { progress, completed, total, current ->
-                        Logger.i("Scraping progress: $progress, $completed/$total, current: $current")
-                        current?.let { currentApplicationNumber.set(it) }
-                    },
-                    trademarkCallback = { trademark ->
-                        trademark?.let {
-                            collectedTrademarks.add(it)
-                            if (collectedTrademarks.size >= chunkSize) {
-                                saveTrademarks(collectedTrademarks)
-                                collectedTrademarks.clear()
-                            }
-                        }
-                    }
+                    threadCount = Constants.MAX_THREADS
                 )
-            }
 
-            // Save any remaining trademarks
-            if (collectedTrademarks.isNotEmpty()) {
-                saveTrademarks(collectedTrademarks)
-                collectedTrademarks.clear()
-            }
+                Logger.i("Retrieved ${trademarks.size} trademarks, preparing to save to database")
 
+                // We'll save all trademarks unless we reach the threshold
+                val allTrademarks = mutableListOf<Trademark>()
+                var shouldStop = false
+
+                // Check for consecutive NA trademarks
+                var consecutiveNACount = 0
+                for (trademark in trademarks) {
+                    currentApplicationNumber.set(trademark.applicationNumber.toIntOrNull())
+                    allTrademarks.add(trademark)
+
+                    if (isEmptyTrademark(trademark)) {
+                        consecutiveNACount++
+                        Logger.i("Found NA trademark: ${trademark.applicationNumber}, consecutive NA count: $consecutiveNACount")
+
+                        if (consecutiveNACount >= naThreshold) {
+                            Logger.i("Reached $naThreshold consecutive NA trademarks. Stopping processing.")
+                            shouldStop = true
+                            break
+                        }
+                    } else {
+                        consecutiveNACount = 0
+                    }
+                }
+
+                // Save all trademarks collected so far if we haven't reached the NA threshold or have some to save
+                if (!shouldStop && allTrademarks.isNotEmpty()) {
+                    saveTrademarks(allTrademarks)
+                    Logger.i("Saved ${allTrademarks.size} trademarks to database")
+                }
+            }
             Logger.i("Trademark scraping completed at ${LocalDateTime.now()}")
         } catch (e: Exception) {
             Logger.e("Error during scheduled trademark scraping", e)
@@ -86,14 +104,22 @@ class TrademarkSchedulerService @Autowired constructor(
 
     @Transactional
     fun saveTrademarks(trademarks: List<Trademark>) {
-        Logger.i("Saving batch of ${trademarks.size} trademarks to database")
-        val entities = trademarks.map { it.toTrademarkEntity() }
+        val sortedTrademarks = trademarks.sortedBy { it.applicationNumber }
+        Logger.i("Saving ${sortedTrademarks.size} trademarks to database")
+        val entities = sortedTrademarks.map { it.toTrademarkEntity() }
         trademarkRepository.saveAll(entities)
     }
 
-   private fun generateApplicationNumbers(startingNumber: String, count: Int): List<String> {
-       val numericValue = startingNumber.toIntOrNull() ?: return emptyList()
-       return (numericValue until numericValue + count).map { it.toString() }
-   }
+    private fun generateApplicationNumbers(startingNumber: Int, count: Int): List<String> {
+        return (startingNumber until startingNumber + count).map { it.toString() }
+    }
 
+    private fun isEmptyTrademark(trademark: Trademark): Boolean {
+        // Check if all fields except applicationNumber are "NA"
+        return trademark.status == "NA" &&
+                trademark.tmClass == "NA" &&
+                trademark.dateOfApplication == "NA" &&
+                trademark.tmAppliedFor == "NA" &&
+                trademark.tmType == "NA"
+    }
 }

@@ -2,9 +2,9 @@ package com.ark.stabot.utils
 
 import com.ark.stabot.model.Trademark
 
-fun createEmptyTrademark(applicationId: String): Trademark {
+fun createEmptyTrademark(applicationId: String, parsingError: Boolean = false): Trademark {
     return Trademark(
-        applicationNumber = applicationId,
+        applicationNumber = if (parsingError) "ParsingErr" else applicationId,
         status = "NA",
         tmClass = "NA",
         dateOfApplication = "NA",
@@ -23,6 +23,7 @@ fun createEmptyTrademark(applicationId: String): Trademark {
         emailId = "NA",
         agentName = "NA",
         agentAddress = "NA",
-        publicationDetails = "NA"
+        publicationDetails = "NA",
+        oppositions = mutableListOf()
     )
 }
