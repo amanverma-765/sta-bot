@@ -6,7 +6,7 @@ object Constants {
     const val GET_CAPTCHA_URL = "https://tmrsearch.ipindia.gov.in/eregister/Viewdetails_Copyright.aspx/GetCaptcha"
     const val MAX_THREADS = 50 // number of threads to run scraper on
     const val INITIAL_TRADEMARK = "478006" // starting trademark
-    const val TRADEMARK_CHUNK_SIZE = 5000 // trademarks to scrape on each run
+    const val TRADEMARK_CHUNK_SIZE = 10000 // trademarks to scrape on each run
     const val NA_THRESHOLD = 100 // Trademarks to be null to stop the scraper
     const val TASK_FREQ = 600000L // Task frequency (Every 15 Mins)
 }
