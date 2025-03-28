@@ -16,6 +16,7 @@ class TrademarkParser(
 
     suspend fun parseTrademarkDetails(
         response: String,
+        applicationNumber: String,
         httpClient: HttpClient,
         defaultHeaders: Map<String, String>
     ): Trademark? {
@@ -80,9 +81,10 @@ class TrademarkParser(
                 }
             }
 
+            tableData["TM Application No."] ?: throw RuntimeException("No Application Number found")
+
             val trademark = Trademark(
-                applicationNumber = tableData["TM Application No."]?.replace("IRDI-", "")
-                    ?: throw RuntimeException("No Application Number found"),
+                applicationNumber = applicationNumber,
                 status = tableData["Status"] ?: throw RuntimeException("No Status found"),
                 tmClass = tableData["Class"] ?: throw RuntimeException("No Class Found"),
                 dateOfApplication = tableData["Date of Application"],

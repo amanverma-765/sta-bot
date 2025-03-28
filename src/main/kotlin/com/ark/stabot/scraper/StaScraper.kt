@@ -42,7 +42,8 @@ class StaScraper(
             val trademark = trademarkParser.parseTrademarkDetails(
                 httpClient = httpClient,
                 defaultHeaders = defaultHeaders,
-                response = trademarkResponse
+                response = trademarkResponse,
+                applicationNumber = applicationId
             ) ?: return createEmptyTrademark(applicationId, parsingError = true)
 
             return trademark
