@@ -14,7 +14,8 @@ object OppositionMapper {
             agentName = this.agentName,
             agentAddr = this.agentAddr,
             status = this.status,
-            decision = this.decision
+            decision = this.decision,
+            trademarkRef = this.trademarkRef
         )
     }
 
@@ -29,6 +30,7 @@ object OppositionMapper {
             agentAddr = this.agentAddr,
             status = this.status,
             decision = this.decision,
+            trademarkRef = this.trademarkRef
         )
     }
 }

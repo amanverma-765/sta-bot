@@ -36,6 +36,9 @@ data class OppositionEntity(
     @Column(name = "decision", columnDefinition = "TEXT")
     val decision: String?,
 
+    @Column(name = "trademark_ref", columnDefinition = "TEXT")
+    val trademarkRef: String? = null,
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "trademark_id")
     var trademark: TrademarkEntity? = null

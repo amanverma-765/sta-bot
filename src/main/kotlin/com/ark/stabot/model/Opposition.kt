@@ -12,5 +12,6 @@ data class Opposition(
     val agentName: String?,
     val agentAddr: String?,
     val status: String?,
-    val decision: String?
+    val decision: String?,
+    val trademarkRef: String?
 )

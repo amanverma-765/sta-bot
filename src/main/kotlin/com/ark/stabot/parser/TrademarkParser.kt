@@ -4,9 +4,14 @@ import co.touchlab.kermit.Logger
 import com.ark.stabot.model.Opposition
 import com.ark.stabot.model.Trademark
 import com.ark.stabot.scraper.OppositionScraper
+import com.ark.stabot.utils.encodeTmNumber
 import io.ktor.client.*
+import io.ktor.client.request.*
+import io.ktor.client.statement.*
+import kotlinx.coroutines.runBlocking
 import org.jsoup.Jsoup
 import org.springframework.stereotype.Component
+import java.io.File
 
 @Component
 class TrademarkParser(
@@ -53,6 +58,38 @@ class TrademarkParser(
                 throw RuntimeException("Status not found for trademark: ${tableData["TM Application No."]}")
             }
 
+            // Extract image
+            if (tableData["Trade Mark Type"]?.lowercase().equals("device")) {
+                val encodedAppNumber = encodeTmNumber(tableData["TM Application No."] ?: "")
+                val appNumber = tableData["TM Application No."] ?: ""
+                val imgUrl = "https://tmrsearch.ipindia.gov.in/eregister/imagedoc.aspx?ID=1&APPNUMBER=$encodedAppNumber"
+
+                // Create directory structure in user home directory
+                val userHome = System.getProperty("user.home")
+                val outputDir = File("$userHome/sta/staFiles/device")
+                if (!outputDir.exists()) {
+                    outputDir.mkdirs()
+                }
+
+                val outputPath = outputDir.absolutePath + File.separator + "${appNumber}_device.jpg"
+                val file = File(outputPath)
+
+                // Check if file already exists before downloading
+                if (file.exists()) {
+                    Logger.i("Image for trademark $appNumber already exists at ${file.absolutePath}, skipping download")
+                } else {
+                    runBlocking {
+                        downloadImageWithRetry(
+                            httpClient = httpClient,
+                            imgUrl = imgUrl,
+                            file = file,
+                            defaultHeaders = defaultHeaders
+                        )
+                    }
+                }
+            }
+
+
             // Extract opposition numbers
             val oppositionNumbers = mutableListOf<String>()
             val oppositionTable = doc.select("td:contains(Opposition/Rectification Details) + td table")
@@ -66,15 +103,18 @@ class TrademarkParser(
                     }
                 }
             }
-
+            // Extract opposition details
             oppositionNumbers.forEach {
                 val oppositionResponse = oppositionScraper.scrapeOpponentData(
                     httpClient = httpClient,
                     defaultHeaders = defaultHeaders,
                     oppNumber = it
                 )
-                oppositionResponse?.let {
-                    val opposition = oppositionParser.parseOpposition(it)
+                oppositionResponse?.let { resp ->
+                    val opposition = oppositionParser.parseOpposition(
+                        response = resp,
+                        applicationId = applicationNumber
+                    )
                     opposition?.let {
                         oppositions.add(opposition)
                     }
@@ -129,5 +169,42 @@ class TrademarkParser(
             correctPage = false
         }
         return correctPage
+    }
+
+    private suspend fun downloadImageWithRetry(
+        httpClient: HttpClient,
+        imgUrl: String,
+        defaultHeaders: Map<String, String>,
+        file: File,
+        maxRetries: Int = 3,
+        initialDelayMs: Long = 1000
+    ) {
+        var retryCount = 0
+        var lastException: Exception? = null
+
+        while (retryCount < maxRetries) {
+            try {
+                val imgResp = httpClient.get(imgUrl) {
+                    headers {
+                        defaultHeaders.forEach { (key, value) ->
+                            append(key, value)
+                        }
+                    }
+                }.readBytes()
+                file.writeBytes(imgResp)
+                Logger.i("Image downloaded successfully to: ${file.absolutePath}")
+                return // Success, exit the function
+            } catch (e: Exception) {
+                lastException = e
+                retryCount++
+                Logger.w("Attempt $retryCount/$maxRetries to download image failed: ${e.message}")
+
+                if (retryCount < maxRetries) {
+                    val delayTime = initialDelayMs * (1L shl (retryCount - 1)) // Exponential backoff
+                    kotlinx.coroutines.delay(delayTime)
+                }
+            }
+        }
+        Logger.e("Failed to download image after $maxRetries attempts: ${lastException?.message}")
     }
 }

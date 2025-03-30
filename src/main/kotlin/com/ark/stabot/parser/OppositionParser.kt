@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component
 
 @Component
 class OppositionParser {
-    fun parseOpposition(response: String): Opposition? {
+    fun parseOpposition(response: String, applicationId: String): Opposition? {
         try {
             val tableData = mutableMapOf<String, String>()
             val doc = Jsoup.parse(response)
@@ -34,7 +34,7 @@ class OppositionParser {
             }
 
             return Opposition(
-                oppositionNumber = tableData["Opp/Rec Date"] ?: run {
+                oppositionNumber = tableData["Opp/Rec No."] ?: run {
                     throw RuntimeException("Opposition number not found")
                 },
                 oppositionDate = tableData["Opp/Rec Date"] ?: "NA",
@@ -44,7 +44,8 @@ class OppositionParser {
                 agentName = tableData["Agent/Attorney Name"] ?: "NA",
                 agentAddr = tableData["Agent/Attorney Address"] ?: "NA",
                 status = tableData["Status"] ?: "NA",
-                decision = tableData["Decision"] ?: "NA"
+                decision = tableData["Decision"] ?: "NA",
+                trademarkRef = applicationId
             )
 
         } catch (ex: Exception) {

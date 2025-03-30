@@ -76,6 +76,6 @@ data class TrademarkEntity(
     @OneToMany(mappedBy = "trademark", cascade = [CascadeType.ALL], orphanRemoval = true)
     val oppositions: MutableList<OppositionEntity> = mutableListOf(),
 
-    @Column(name = "oppositions_alt", columnDefinition = "TEXT")
+    @Column(name = "oppositions_alt")
     val oppositionsAlt: String? = null
 )
