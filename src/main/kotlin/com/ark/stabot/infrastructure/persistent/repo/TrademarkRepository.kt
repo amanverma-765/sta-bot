@@ -5,4 +5,6 @@ import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.stereotype.Repository
 
 @Repository
-interface TrademarkRepository: JpaRepository<TrademarkEntity, Long>
+interface TrademarkRepository: JpaRepository<TrademarkEntity, Long> {
+    fun findTopByOrderByApplicationNumberDesc(): TrademarkEntity?
+}

@@ -43,8 +43,7 @@ class TrademarkSchedulerService(
 
             // Determine starting point
             val lastProcessedTrademark = trademarkRepository
-                .findAll()
-                .maxByOrNull { it.applicationNumber }
+                .findTopByOrderByApplicationNumberDesc()
                 ?.applicationNumber?.toIntOrNull() ?: (Constants.INITIAL_TRADEMARK.toInt() - 1)
 
             currentApplicationNumber.set(lastProcessedTrademark + 1)
