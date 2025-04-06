@@ -13,7 +13,7 @@ class TrademarkController(private val trademarkRepository: TrademarkRepository) 
     @GetMapping("/")
     fun getTrademarkStatus(): String {
         val totalTrademarks = trademarkRepository.count()
-        val lastTrademark = trademarkRepository.findTopByApplicationNumberAsNumberDesc()?.toTrademark()
+        val lastTrademark = trademarkRepository.findTopByOrderByIdDesc()?.toTrademark()
         return getTrademarkStatusTemplate(totalTrademarks.toInt(), lastTrademark)
     }
 }

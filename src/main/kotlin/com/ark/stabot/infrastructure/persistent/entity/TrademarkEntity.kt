@@ -10,7 +10,7 @@ data class TrademarkEntity(
     @Column(name = "id")
     val id: Long? = null,
 
-    @Column(name = "application_number", nullable = false, columnDefinition = "TEXT")
+    @Column(name = "application_number", nullable = false, columnDefinition = "TEXT", unique = true)
     val applicationNumber: String,
 
     @Column(name = "status", nullable = false, columnDefinition = "TEXT")
