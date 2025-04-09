@@ -27,6 +27,7 @@ class TrademarkSchedulerService(
     private val tmChunkSize = Constants.TRADEMARK_CHUNK_SIZE
     private val consecutiveNaCount = AtomicInteger(0)
     private val naThreshold = Constants.NA_THRESHOLD
+    private val maxApplicationNumber = Constants.MAX_APPLICATION_NUMBER
 
 
     @Scheduled(fixedRate = Constants.TASK_FREQ)
@@ -45,6 +46,12 @@ class TrademarkSchedulerService(
             val lastProcessedTrademark = trademarkRepository
                 .findTopByOrderByIdDesc()
                 ?.applicationNumber?.toIntOrNull() ?: (Constants.INITIAL_TRADEMARK.toInt() - 1)
+
+            // Check if we've already reached the maximum application number
+            if (lastProcessedTrademark >= maxApplicationNumber) {
+                Logger.i("Maximum application number ($maxApplicationNumber) already reached, stopping scraping")
+                return
+            }
 
             currentApplicationNumber.set(lastProcessedTrademark + 1)
 
@@ -110,7 +117,8 @@ class TrademarkSchedulerService(
     }
 
     private fun generateApplicationNumbers(startingNumber: Int, count: Int): List<String> {
-        return (startingNumber until startingNumber + count).map { it.toString() }
+        return (startingNumber until minOf(startingNumber + count, maxApplicationNumber + 1))
+            .map { it.toString() }
     }
 
     private fun isEmptyTrademark(trademark: Trademark): Boolean {
