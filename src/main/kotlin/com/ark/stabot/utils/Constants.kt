@@ -7,7 +7,7 @@ object Constants {
     const val MAX_THREADS = 25 // number of threads to run scraper on
     const val INITIAL_TRADEMARK = "478006" // starting trademark
     const val TRADEMARK_CHUNK_SIZE = 5000 // trademarks to scrape on each run
-    const val NA_THRESHOLD = 2500 // Trademarks to be null to stop the scraper
+    const val NA_THRESHOLD = 4500 // Trademarks to be null to stop the scraper
     const val TASK_FREQ = 600000L // Task frequency (Every 10 Mins)
     const val MAX_APPLICATION_NUMBER = 478016 // Maximum application number to scrape
 }
